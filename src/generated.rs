@@ -177,10 +177,7 @@ impl STmpVert {
     }
 }
 
-pub unsafe fn genTangSpace<I: Geometry>(
-    geometry: &mut I,
-    fAngularThreshold: f32,
-) -> bool {
+pub unsafe fn genTangSpace<I: Geometry>(geometry: &mut I, fAngularThreshold: f32) -> bool {
     let mut iNrTrianglesIn = 0;
     let mut f = 0;
     let mut t = 0;
@@ -300,8 +297,8 @@ pub unsafe fn genTangSpace<I: Geometry>(
             i = 0;
             while i < verts_0 {
                 let mut pTSpace: *const STSpace = &mut psTspace[index] as *mut STSpace;
-                let mut tang = Vec3::new((*pTSpace).vOs.x, (*pTSpace).vOs.y, (*pTSpace).vOs.z);
-                let mut bitang = Vec3::new((*pTSpace).vOt.x, (*pTSpace).vOt.y, (*pTSpace).vOt.z);
+                let mut tang = Vec3::new((&*pTSpace).vOs.x, (&*pTSpace).vOs.y, (&*pTSpace).vOs.z);
+                let mut bitang = Vec3::new((&*pTSpace).vOt.x, (&*pTSpace).vOt.y, (&*pTSpace).vOt.z);
                 geometry.set_tangent(
                     tang.into(),
                     bitang.into(),
@@ -544,12 +541,7 @@ unsafe fn GenerateTSpaces<I: Geometry>(
             }
             if iMembers > 1 {
                 let mut uSeed: u32 = 39871946i32 as u32;
-                QuickSort(
-                    pTmpMembers.as_mut_ptr(),
-                    0i32,
-                    (iMembers - 1) as i32,
-                    uSeed,
-                );
+                QuickSort(pTmpMembers.as_mut_ptr(), 0i32, (iMembers - 1) as i32, uSeed);
             }
             tmp_group.iNrFaces = iMembers as i32;
             tmp_group.pTriMembers = pTmpMembers.clone();
@@ -781,7 +773,7 @@ unsafe fn CompareSubGroups(mut pg1: *const SSubGroup, mut pg2: *const SSubGroup)
         return false;
     }
     while i < (*pg1).iNrFaces as usize && bStillSame {
-        bStillSame = if (*pg1).pTriMembers[i] == (*pg2).pTriMembers[i] {
+        bStillSame = if (&*pg1).pTriMembers[i] == (&*pg2).pTriMembers[i] {
             true
         } else {
             false
@@ -792,12 +784,7 @@ unsafe fn CompareSubGroups(mut pg1: *const SSubGroup, mut pg2: *const SSubGroup)
     }
     return bStillSame;
 }
-unsafe fn QuickSort(
-    mut pSortBuffer: *mut i32,
-    mut iLeft: i32,
-    mut iRight: i32,
-    mut uSeed: u32,
-) {
+unsafe fn QuickSort(mut pSortBuffer: *mut i32, mut iLeft: i32, mut iRight: i32, mut uSeed: u32) {
     let mut iL: i32 = 0;
     let mut iR: i32 = 0;
     let mut n: i32 = 0;
@@ -1005,15 +992,15 @@ unsafe fn InitTriInfo<I: Geometry>(
             (*pTriInfos.offset(f as isize)).FaceNeighbors[i as usize] = -1i32;
             let ref mut fresh4 = (*pTriInfos.offset(f as isize)).AssignedGroup[i as usize];
             *fresh4 = 0 as *mut SGroup;
-            (*pTriInfos.offset(f as isize)).vOs.x = 0.0f32;
-            (*pTriInfos.offset(f as isize)).vOs.y = 0.0f32;
-            (*pTriInfos.offset(f as isize)).vOs.z = 0.0f32;
-            (*pTriInfos.offset(f as isize)).vOt.x = 0.0f32;
-            (*pTriInfos.offset(f as isize)).vOt.y = 0.0f32;
-            (*pTriInfos.offset(f as isize)).vOt.z = 0.0f32;
-            (*pTriInfos.offset(f as isize)).fMagS = 0i32 as f32;
-            (*pTriInfos.offset(f as isize)).fMagT = 0i32 as f32;
-            (*pTriInfos.offset(f as isize)).iFlag |= 4i32;
+            (&mut *pTriInfos.offset(f as isize)).vOs.x = 0.0f32;
+            (&mut *pTriInfos.offset(f as isize)).vOs.y = 0.0f32;
+            (&mut *pTriInfos.offset(f as isize)).vOs.z = 0.0f32;
+            (&mut *pTriInfos.offset(f as isize)).vOt.x = 0.0f32;
+            (&mut *pTriInfos.offset(f as isize)).vOt.y = 0.0f32;
+            (&mut *pTriInfos.offset(f as isize)).vOt.z = 0.0f32;
+            (&mut *pTriInfos.offset(f as isize)).fMagS = 0i32 as f32;
+            (&mut *pTriInfos.offset(f as isize)).fMagT = 0i32 as f32;
+            (&mut *pTriInfos.offset(f as isize)).iFlag |= 4i32;
             i += 1
         }
         f += 1
@@ -1348,10 +1335,7 @@ unsafe fn QuickSortEdges(
 }
 
 // returns the texture area times 2
-unsafe fn CalcTexArea<I: Geometry>(
-    geometry: &mut I,
-    mut indices: *const i32,
-) -> f32 {
+unsafe fn CalcTexArea<I: Geometry>(geometry: &mut I, mut indices: *const i32) -> f32 {
     let t1 = get_tex_coord(geometry, *indices.offset(0isize) as usize);
     let t2 = get_tex_coord(geometry, *indices.offset(1isize) as usize);
     let t3 = get_tex_coord(geometry, *indices.offset(2isize) as usize);
